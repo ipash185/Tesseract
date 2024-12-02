@@ -37,4 +37,5 @@ export default defineConfig({
       type: 'module',
     },
   })],
+  base: '/Tesseract/',
 })

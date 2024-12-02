@@ -1,16 +1,16 @@
 {
-  "homepage": "https://ipash185.github.io/Tesseract",
   "name": "ktj25-pwa",
   "private": true,
   "version": "0.0.0",
+  "homepage": "https://ipash185.github.io/Tesseract/",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d build" 
+    "predeploy" : "npm run build",
+    "deploy" : "gh-pages -d dist"
   },
   "dependencies": {
     "@react-three/drei": "^9.118.0",
