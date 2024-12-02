@@ -76,6 +76,56 @@ export default function Scene4D() {
             [-1, 1, 1, 1], [1, 1, 1, 1],
         ];
 
+        // uncomment for planar view
+        // const faceIndices = [
+        //     [0, 1, 3, 2], [0, 2, 6, 4], [0, 4, 5, 1], [1, 5, 7, 3],
+        //     [2, 3, 7, 6], [4, 6, 7, 5], [8, 9, 11, 10], [8, 10, 14, 12],
+        //     [8, 12, 13, 9], [9, 13, 15, 11], [10, 11, 15, 14], [12, 14, 15, 13],
+        //     [0, 1, 9, 8], [2, 3, 11, 10], [4, 5, 13, 12], [6, 7, 15, 14],
+        //     [0, 2, 10, 8], [1, 3, 11, 9], [4, 6, 14, 12], [5, 7, 15, 13],
+        //     [0, 4, 12, 8], [1, 5, 13, 9], [2, 6, 14, 10], [3, 7, 15, 11],
+        // ];
+        
+        // const planes = [];
+        
+        // const createPlanes = (vertices3D) => {
+        //     // Remove old planes from the scene
+        //     planes.forEach(plane => scene.remove(plane));
+        //     planes.length = 0;
+        
+        //     // Create new planes for each face
+        //     // Precompute a unique color for each face
+        //     const faceColors = faceIndices.map((_, index) => 
+        //         new THREE.Color().setHSL(index / faceIndices.length, 0.7, 0.5)
+        //     );
+
+        //     faceIndices.forEach((face, index) => {
+        //         const [a, b, c, d] = face.map(i => vertices3D[i]);
+
+        //         // Define geometry for the plane
+        //         const planeGeometry = new THREE.BufferGeometry();
+        //         const planeVertices = new Float32Array([
+        //             ...a, ...b, ...c, // Triangle 1
+        //             ...a, ...c, ...d  // Triangle 2
+        //         ]);
+        //         planeGeometry.setAttribute('position', new THREE.BufferAttribute(planeVertices, 3));
+
+        //         // Use the precomputed color
+        //         const planeMaterial = new THREE.MeshBasicMaterial({
+        //             color: faceColors[index],
+        //             side: THREE.DoubleSide,
+        //             transparent: true,
+        //             opacity: 0.3,
+        //         });
+
+        //         // Create and add plane to the scene
+        //         const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        //         scene.add(plane);
+        //         planes.push(plane);
+        //     });
+
+        // };
+
         const project4DTo3D = (vertex) => {
             const [x, y, z, w] = vertex;
             const scale = 1 / (distance - w);
@@ -168,12 +218,17 @@ export default function Scene4D() {
             );
             updateRotations(vertices);
             const vertices3D = vertices.map(project4DTo3D);
-
+            // comment for planar view
             const positions = new Float32Array(
                 edges.flatMap(([i, j]) => [...vertices3D[i], ...vertices3D[j]])
             );
 
             geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            // Update planes
+
+            // uncomment for planar view
+            // createPlanes(vertices3D);
         };
 
         const rotate4D = (vertices, plane, angle) => {
@@ -206,6 +261,7 @@ export default function Scene4D() {
                     setBoxRotation((prev => {
                         let newRotation = [...prev];
                         newRotation[0] -= angle;
+                        newRotation[0] = (newRotation[0] - Math.PI)%Math.PI;
                         return newRotation;
                     }));
                 }
@@ -214,6 +270,7 @@ export default function Scene4D() {
                     setBoxRotation((prev => {
                         let newRotation = [...prev];
                         newRotation[0] += angle;
+                        newRotation[0] = (newRotation[0] - Math.PI)%Math.PI;
                         return newRotation;
                     }));
                 }
@@ -222,6 +279,7 @@ export default function Scene4D() {
                     setBoxRotation((prev => {
                         let newRotation = [...prev];
                         newRotation[1] += angle;
+                        newRotation[1] = (newRotation[1] - Math.PI)%Math.PI;
                         return newRotation;
                     }));
                 }
@@ -230,6 +288,7 @@ export default function Scene4D() {
                     setBoxRotation((prev => {
                         let newRotation = [...prev];
                         newRotation[1] -= angle;
+                        newRotation[1] = (newRotation[1] - Math.PI)%Math.PI;
                         return newRotation;
                     }));
                 }
@@ -238,6 +297,7 @@ export default function Scene4D() {
                     setBoxRotation((prev => {
                         let newRotation = [...prev];
                         newRotation[2] += angle;
+                        newRotation[2] = (newRotation[2] + Math.PI)%Math.PI;
                         return newRotation;
                     }));
                 }
@@ -246,6 +306,7 @@ export default function Scene4D() {
                     setBoxRotation((prev => {
                         let newRotation = [...prev];
                         newRotation[2] -= angle;
+                        newRotation[2] = (newRotation[2] + Math.PI)%Math.PI;
                         return newRotation;
                     }));
                 }
@@ -254,6 +315,7 @@ export default function Scene4D() {
                     setBoxRotation((prev => {
                         let newRotation = [...prev];
                         newRotation[3] += angle;
+                        newRotation[3] = (newRotation[3] + Math.PI)%Math.PI;
                         return newRotation;
                     }));
                 }
@@ -262,6 +324,7 @@ export default function Scene4D() {
                     setBoxRotation((prev => {
                         let newRotation = [...prev];
                         newRotation[3] -= angle;
+                        newRotation[3] = (newRotation[3] + Math.PI)%Math.PI;
                         return newRotation;
                     }));
                 }
@@ -270,6 +333,7 @@ export default function Scene4D() {
                     setBoxRotation((prev => {
                         let newRotation = [...prev];
                         newRotation[4] -= angle;
+                        newRotation[4] = (newRotation[4] - Math.PI)%Math.PI;
                         return newRotation;
                     }));
                 }
@@ -278,6 +342,7 @@ export default function Scene4D() {
                     setBoxRotation((prev => {
                         let newRotation = [...prev];
                         newRotation[4] += angle;
+                        newRotation[4] = (newRotation[4] - Math.PI)%Math.PI;
                         return newRotation;
                     }));
                 }
@@ -286,6 +351,7 @@ export default function Scene4D() {
                     setBoxRotation((prev => {
                         let newRotation = [...prev];
                         newRotation[5] += angle;
+                        newRotation[5] = (newRotation[5] + Math.PI)%Math.PI;
                         return newRotation;
                     }));
                 }
@@ -294,6 +360,7 @@ export default function Scene4D() {
                     setBoxRotation((prev => {
                         let newRotation = [...prev];
                         newRotation[5] -= angle;
+                        newRotation[5] = (newRotation[5] + Math.PI)%Math.PI;
                         return newRotation;
                     }));
                 }
@@ -432,26 +499,26 @@ export default function Scene4D() {
                     </tr>
                     <tr>
                         <td style={{ padding: '5px', border: '1px solid #ccc' }}>
-                        <p>YZ: {(-boxRotation[0]).toFixed(2)}</p>
+                        <p>YZ: {((-boxRotation[0])%Math.PI).toFixed(2)}</p>
                         </td>
                         <td style={{ padding: '5px', border: '1px solid #ccc' }}>
-                        <p>XY: {boxRotation[2].toFixed(2)}</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style={{ padding: '5px', border: '1px solid #ccc' }}>
-                        <p>XZ: {(-boxRotation[1]).toFixed(2)}</p>
-                        </td>
-                        <td style={{ padding: '5px', border: '1px solid #ccc' }}>
-                        <p>WX: {boxRotation[3].toFixed(2)}</p>
+                        <p>XY: {(boxRotation[2]%Math.PI).toFixed(2)}</p>
                         </td>
                     </tr>
                     <tr>
                         <td style={{ padding: '5px', border: '1px solid #ccc' }}>
-                        <p>WY: {(-boxRotation[4]).toFixed(2)}</p>
+                        <p>XZ: {((-boxRotation[1])%Math.PI).toFixed(2)}</p>
                         </td>
                         <td style={{ padding: '5px', border: '1px solid #ccc' }}>
-                        <p>WZ: {boxRotation[5].toFixed(2)}</p>
+                        <p>WX: {(boxRotation[3]%Math.PI).toFixed(2)}</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style={{ padding: '5px', border: '1px solid #ccc' }}>
+                        <p>WY: {((-boxRotation[4])%Math.PI).toFixed(2)}</p>
+                        </td>
+                        <td style={{ padding: '5px', border: '1px solid #ccc' }}>
+                        <p>WZ: {(boxRotation[5]%Math.PI).toFixed(2)}</p>
                         </td>
                     </tr>
                     </tbody>
