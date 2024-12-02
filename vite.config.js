@@ -12,12 +12,11 @@ export default defineConfig({
       disabled: false,
       config: true,
     },
-
     manifest: {
-      name: 'KTJ25_PWA',
-      short_name: 'KTJ25_PWA',
+      name: 'Tesseract',
+      short_name: 'Tesseract',
       start_url: '/index.html',
-      description: 'KTJ25_PWA',
+      description: '4D Simulator',
       background_color: '#123456',
       theme_color: '#fffaa1',
       orientation: 'landscape-primary',
@@ -31,8 +30,8 @@ export default defineConfig({
     },
 
     devOptions: {
-      enabled: true,
-      // navigateFallback: 'index.html',
+      enabled: false,
+      navigateFallback: '/index.html',
       suppressWarnings: true,
       type: 'module',
     },
