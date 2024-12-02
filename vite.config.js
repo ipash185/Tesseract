@@ -15,7 +15,7 @@ export default defineConfig({
     manifest: {
       name: 'Tesseract',
       short_name: 'Tesseract',
-      start_url: '/index.html',
+      start_url: '/Tesseract/',
       description: '4D Simulator',
       background_color: '#123456',
       theme_color: '#fffaa1',
@@ -31,7 +31,7 @@ export default defineConfig({
 
     devOptions: {
       enabled: false,
-      navigateFallback: '/index.html',
+      navigateFallback: '/Tesseract/',
       suppressWarnings: true,
       type: 'module',
     },
