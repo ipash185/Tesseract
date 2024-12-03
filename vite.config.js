@@ -15,6 +15,32 @@ export default defineConfig({
     manifest: {
       name: 'Tesseract',
       short_name: 'Tesseract',
+      icons: [
+        {
+          "src": "/Tesseract/pwa-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any"
+        },
+        {
+          "src": "/Tesseract/pwa-512x512.png",
+          "sizes": "512x512",
+          "type": "image/png",
+          "purpose": "any"
+        },
+        {
+          "src": "/Tesseract/pwa-maskable-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "maskable"
+        },
+        {
+          "src": "/Tesseract/pwa-maskable-512x512.png",
+          "sizes": "512x512",
+          "type": "image/png",
+          "purpose": "maskable"
+        }
+      ],
       start_url: '/Tesseract/',
       description: '4D Simulator',
       background_color: '#123456',
