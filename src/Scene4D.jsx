@@ -7,16 +7,18 @@ import Instructions from './Instructions';
 export default function Scene4D() {
     const mountRef = useRef(null);
     const [boxCentre, setBoxCentre] = useState([0, 0, 0, 0]);
+    const boxCentreRef = useRef(boxCentre);
     const vertices4DRef = useRef([]);
     const axesRef = useRef([]);
-    const boxCentreRef = useRef(boxCentre);
-    const [axesRotation, setAxesRotation] = useState([0, 0, 0, 0, 0, 0]);
+    const axesRotationRef = useRef([0, 0, 0, 0, 0, 0]);
     const [boxRotation, setBoxRotation] = useState([0, 0, 0, 0, 0, 0]);
+    const planarViewRef = useRef(false);
+    const visibleCubesRef = useRef([false, false, false, false, false, false, false, false]);
     const distance = 2;
 
     useEffect(() => {
         boxCentreRef.current = boxCentre;
-    }, [boxCentre]);
+    }, [boxCentre]); 
 
     useEffect(() => {
         const scene = new THREE.Scene();
@@ -76,55 +78,69 @@ export default function Scene4D() {
             [-1, 1, 1, 1], [1, 1, 1, 1],
         ];
 
-        // uncomment for planar view
-        // const faceIndices = [
-        //     [0, 1, 3, 2], [0, 2, 6, 4], [0, 4, 5, 1], [1, 5, 7, 3],
-        //     [2, 3, 7, 6], [4, 6, 7, 5], [8, 9, 11, 10], [8, 10, 14, 12],
-        //     [8, 12, 13, 9], [9, 13, 15, 11], [10, 11, 15, 14], [12, 14, 15, 13],
-        //     [0, 1, 9, 8], [2, 3, 11, 10], [4, 5, 13, 12], [6, 7, 15, 14],
-        //     [0, 2, 10, 8], [1, 3, 11, 9], [4, 6, 14, 12], [5, 7, 15, 13],
-        //     [0, 4, 12, 8], [1, 5, 13, 9], [2, 6, 14, 10], [3, 7, 15, 11],
-        // ];
+        const faceIndices = [
+            [0, 1, 3, 2], [0, 2, 6, 4], [0, 4, 5, 1], [1, 5, 7, 3],
+            [2, 3, 7, 6], [4, 6, 7, 5], [8, 9, 11, 10], [8, 10, 14, 12],
+            [8, 12, 13, 9], [9, 13, 15, 11], [10, 11, 15, 14], [12, 14, 15, 13],
+            [0, 1, 9, 8], [2, 3, 11, 10], [4, 5, 13, 12], [6, 7, 15, 14],
+            [0, 2, 10, 8], [1, 3, 11, 9], [4, 6, 14, 12], [5, 7, 15, 13],
+            [0, 4, 12, 8], [1, 5, 13, 9], [2, 6, 14, 10], [3, 7, 15, 11],
+        ];
+
+        // Face indices for the tesseract (grouped into cubes)
+        const cubeFaceGroups = [
+            [[0, 1, 3, 2], [0, 2, 6, 4], [0, 4, 5, 1], [1, 5, 7, 3], [2, 3, 7, 6], [4, 6, 7, 5]],
+            [[8, 9, 11, 10], [8, 10, 14, 12], [8, 12, 13, 9], [9, 13, 15, 11], [10, 11, 15, 14], [12, 14, 15, 13]],
+            [[0, 1, 9, 8], [4, 5, 13, 12], [0, 4, 12, 8], [1, 5, 13, 9], [0, 4, 5, 1], [8, 12, 13, 9]],
+            [[2, 3, 11, 10], [6, 7, 15, 14], [2, 6, 14, 10], [3, 7, 15, 11], [2, 3, 7, 6], [10, 11, 15, 14]],
+            [[0, 2, 10, 8], [4, 6, 14, 12], [0, 4, 12, 8], [2, 6, 14, 10], [0, 2, 6, 4], [8, 10, 14, 12]],
+            [[1, 3, 11, 9], [5, 7, 15, 13], [1, 5, 13, 9], [3, 7, 15, 11], [1, 5, 7, 3], [9, 13, 15, 11]],
+            [[0, 2, 10, 8], [1, 3, 11, 9], [0, 1, 9, 8], [2, 3, 11, 10], [0, 1, 3, 2], [8, 9, 11, 10]],
+            [[5, 7, 15, 13], [6, 7, 15, 14], [4, 5, 13, 12], [4, 6, 14, 12], [4, 6, 7, 5], [12, 14, 15, 13]],
+        ];
         
-        // const planes = [];
+        const planesAll = [];
+        const planesCubes = [];
+        for (let i = 0; i < 8; i++) {
+            planesCubes.push([]);
+        }        
+        const createPlanes = (vertices3D, faces, planes) => {
+            // Remove old planes from the scene
+            planes.forEach(plane => scene.remove(plane));
+            planes.length = 0;
         
-        // const createPlanes = (vertices3D) => {
-        //     // Remove old planes from the scene
-        //     planes.forEach(plane => scene.remove(plane));
-        //     planes.length = 0;
-        
-        //     // Create new planes for each face
-        //     // Precompute a unique color for each face
-        //     const faceColors = faceIndices.map((_, index) => 
-        //         new THREE.Color().setHSL(index / faceIndices.length, 0.7, 0.5)
-        //     );
+            // Create new planes for each face
+            // Precompute a unique color for each face
+            const faceColors = faces.map((_, index) => 
+                new THREE.Color().setHSL(index / faces.length, 0.7, 0.5)
+            );
 
-        //     faceIndices.forEach((face, index) => {
-        //         const [a, b, c, d] = face.map(i => vertices3D[i]);
+            faces.forEach((face, index) => {
+                const [a, b, c, d] = face.map(i => vertices3D[i]);
 
-        //         // Define geometry for the plane
-        //         const planeGeometry = new THREE.BufferGeometry();
-        //         const planeVertices = new Float32Array([
-        //             ...a, ...b, ...c, // Triangle 1
-        //             ...a, ...c, ...d  // Triangle 2
-        //         ]);
-        //         planeGeometry.setAttribute('position', new THREE.BufferAttribute(planeVertices, 3));
+                // Define geometry for the plane
+                const planeGeometry = new THREE.BufferGeometry();
+                const planeVertices = new Float32Array([
+                    ...a, ...b, ...c, // Triangle 1
+                    ...a, ...c, ...d  // Triangle 2
+                ]);
+                planeGeometry.setAttribute('position', new THREE.BufferAttribute(planeVertices, 3));
 
-        //         // Use the precomputed color
-        //         const planeMaterial = new THREE.MeshBasicMaterial({
-        //             color: faceColors[index],
-        //             side: THREE.DoubleSide,
-        //             transparent: true,
-        //             opacity: 0.3,
-        //         });
+                // Use the precomputed color
+                const planeMaterial = new THREE.MeshBasicMaterial({
+                    color: faceColors[index],
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.3,
+                });
 
-        //         // Create and add plane to the scene
-        //         const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-        //         scene.add(plane);
-        //         planes.push(plane);
-        //     });
+                // Create and add plane to the scene
+                const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+                scene.add(plane);
+                planes.push(plane);
+            });
 
-        // };
+        };
 
         const project4DTo3D = (vertex) => {
             const [x, y, z, w] = vertex;
@@ -179,12 +195,12 @@ export default function Scene4D() {
             let verticesWY = _.cloneDeep(vertices);
             let verticesWZ = _.cloneDeep(vertices);
 
-            rotate4D(verticesYZ, 'yz', axesRotation[0]);
-            rotate4D(verticesXZ, 'xz', axesRotation[1]);
-            rotate4D(verticesXY, 'xy', axesRotation[2]);
-            rotate4D(verticesWX, 'wx', axesRotation[3]);
-            rotate4D(verticesWY, 'wy', axesRotation[4]);
-            rotate4D(verticesWZ, 'wz', axesRotation[5]);
+            rotate4D(verticesYZ, 'yz', axesRotationRef.current[0]);
+            rotate4D(verticesXZ, 'xz', axesRotationRef.current[1]);
+            rotate4D(verticesXY, 'xy', axesRotationRef.current[2]);
+            rotate4D(verticesWX, 'wx', axesRotationRef.current[3]);
+            rotate4D(verticesWY, 'wy', axesRotationRef.current[4]);
+            rotate4D(verticesWZ, 'wz', axesRotationRef.current[5]);
 
             vertices.forEach((vertex, index1) => {
                 vertex.forEach((value, index2) => {
@@ -218,17 +234,75 @@ export default function Scene4D() {
             );
             updateRotations(vertices);
             const vertices3D = vertices.map(project4DTo3D);
-            // comment for planar view
-            const positions = new Float32Array(
-                edges.flatMap(([i, j]) => [...vertices3D[i], ...vertices3D[j]])
-            );
+            if (!planarViewRef.current) {
+                // if planes exist in scene, remove them
+                planesAll.forEach(plane => scene.remove(plane));
 
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                scene.add(lines);
+                const positions = new Float32Array(
+                    edges.flatMap(([i, j]) => [...vertices3D[i], ...vertices3D[j]])
+                );
 
-            // Update planes
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
-            // uncomment for planar view
-            // createPlanes(vertices3D);
+                if (visibleCubesRef.current[0] === true) {
+                    createPlanes(vertices3D, cubeFaceGroups[0], planesCubes[0]);
+                }
+                else {
+                    planesCubes[0].forEach(plane => scene.remove(plane));
+                }
+                if (visibleCubesRef.current[1] === true) {
+                    createPlanes(vertices3D, cubeFaceGroups[1], planesCubes[1]);
+                }
+                else {
+                    planesCubes[1].forEach(plane => scene.remove(plane));
+                }
+                if (visibleCubesRef.current[2] === true) {
+                    createPlanes(vertices3D, cubeFaceGroups[2], planesCubes[2]);
+                }
+                else {
+                    planesCubes[2].forEach(plane => scene.remove(plane));
+                }
+                if (visibleCubesRef.current[3] === true) {
+                    createPlanes(vertices3D, cubeFaceGroups[3], planesCubes[3]);
+                }
+                else {
+                    planesCubes[3].forEach(plane => scene.remove(plane));
+                }
+                if (visibleCubesRef.current[4] === true) {
+                    createPlanes(vertices3D, cubeFaceGroups[4], planesCubes[4]);
+                }
+                else {
+                    planesCubes[4].forEach(plane => scene.remove(plane));
+                }
+                if (visibleCubesRef.current[5] === true) {
+                    createPlanes(vertices3D, cubeFaceGroups[5], planesCubes[5]);
+                }
+                else {
+                    planesCubes[5].forEach(plane => scene.remove(plane));
+                }
+                if (visibleCubesRef.current[6] === true) {
+                    createPlanes(vertices3D, cubeFaceGroups[6], planesCubes[6]);
+                }
+                else {
+                    planesCubes[6].forEach(plane => scene.remove(plane));
+                }
+                if (visibleCubesRef.current[7] === true) {
+                    createPlanes(vertices3D, cubeFaceGroups[7], planesCubes[7]);
+                }
+                else {
+                    planesCubes[7].forEach(plane => scene.remove(plane));
+                }
+            }
+            else {
+                // if lines exist in scene, remove them
+                scene.remove(lines);
+                for (let i = 0; i < 8; i++) {
+                    planesCubes[i].forEach(plane => scene.remove(plane));
+                }
+                // Update planes
+                createPlanes(vertices3D, faceIndices, planesAll);
+            }
         };
 
         const rotate4D = (vertices, plane, angle) => {
@@ -365,67 +439,31 @@ export default function Scene4D() {
                     }));
                 }
         
-                // Additional logic for Shift + Z + key combinations
+                // Additional logic for axes rotation
                 else if (key === 'r') {
-                    setAxesRotation((prev) => {
-                        prev[0] -= angle;
-                        return prev;
-                    });
+                    axesRotationRef.current[0] -= angle;
                 } else if (key === 'f') {
-                    setAxesRotation((prev) => {
-                        prev[0] += angle;
-                        return prev;
-                    })
+                    axesRotationRef.current[0] += angle;
                 } else if (key === 't') {
-                    setAxesRotation((prev) => {
-                        prev[1] += angle;
-                        return prev;
-                    })
+                    axesRotationRef.current[1] += angle;
                 } else if (key === 'g') {
-                    setAxesRotation((prev) => {
-                        prev[1] -= angle;
-                        return prev;
-                    })
+                    axesRotationRef.current[1] -= angle;
                 } else if (key === 'y') {
-                    setAxesRotation((prev) => {
-                        prev[2] += angle;
-                        return prev;
-                    })
+                    axesRotationRef.current[2] += angle;
                 } else if (key === 'h') {
-                    setAxesRotation((prev) => {
-                        prev[2] -= angle;
-                        return prev;
-                    })
+                    axesRotationRef.current[2] -= angle;
                 } else if (key === 'u') {
-                    setAxesRotation((prev) => {
-                        prev[3] += angle;
-                        return prev;
-                    })
+                    axesRotationRef.current[3] += angle;
                 } else if (key === 'j') {
-                    setAxesRotation((prev) => {
-                        prev[3] -= angle;
-                        return prev;
-                    })
+                    axesRotationRef.current[3] -= angle;
                 } else if (key === 'i') {
-                    setAxesRotation((prev) => {
-                        prev[4] -= angle;
-                        return prev;
-                    })
+                    axesRotationRef.current[4] -= angle;
                 } else if (key === 'k') {
-                    setAxesRotation((prev) => {
-                        prev[4] += angle;
-                        return prev;
-                    })
+                    axesRotationRef.current[4] += angle;
                 } else if (key === 'o') {
-                    setAxesRotation((prev) => {
-                        prev[5] += angle;
-                        return prev;
-                    })
+                    axesRotationRef.current[5] += angle;
                 } else if (key === 'l') {
-                    setAxesRotation((prev) => {
-                        prev[5] -= angle;
-                        return prev;
-                    })
+                    axesRotationRef.current[5] -= angle;
                 }
             }
 
@@ -449,6 +487,7 @@ export default function Scene4D() {
         document.addEventListener('keydown', handleKeyDown);
 
         controls.update();
+
         function animate() {
             requestAnimationFrame(animate);
             updateAxesGeometry();
@@ -523,6 +562,92 @@ export default function Scene4D() {
                     </tr>
                     </tbody>
                 </table>
+                <div>
+                    <input 
+                        type="checkbox"
+                        id="planar-view"
+                        onChange={() => planarViewRef.current = !planarViewRef.current} 
+                    />
+                    <label htmlFor="planar-view">Planar View</label>
+                </div>
+                <div>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <input 
+                                        type="checkbox"
+                                        id="visCube1"
+                                        onChange={() => visibleCubesRef.current[0] = !visibleCubesRef.current[0]} 
+                                    />
+                                    <label htmlFor="visCube1">Cube 1</label>
+                                </td>
+                                <td>
+                                    <input 
+                                        type="checkbox"
+                                        id="visCube2"
+                                        onChange={() => visibleCubesRef.current[1] = !visibleCubesRef.current[1]} 
+                                    />
+                                    <label htmlFor="visCube2">Cube 2</label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input 
+                                        type="checkbox"
+                                        id="visCube3"
+                                        onChange={() => visibleCubesRef.current[2] = !visibleCubesRef.current[2]} 
+                                    />
+                                    <label htmlFor="visCube3">Cube 3</label>
+                                </td>
+                                <td>
+                                    <input 
+                                        type="checkbox"
+                                        id="visCube4"
+                                        onChange={() => visibleCubesRef.current[3] = !visibleCubesRef.current[3]} 
+                                    />
+                                    <label htmlFor="visCube4">Cube 4</label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input 
+                                        type="checkbox"
+                                        id="visCube5"
+                                        onChange={() => visibleCubesRef.current[4] = !visibleCubesRef.current[4]} 
+                                    />
+                                    <label htmlFor="visCube5">Cube 5</label>
+                                </td>
+                                <td>
+                                    <input 
+                                        type="checkbox"
+                                        id="visCube6"
+                                        onChange={() => visibleCubesRef.current[5] = !visibleCubesRef.current[5]} 
+                                    />
+                                    <label htmlFor="visCube6">Cube 6</label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input 
+                                        type="checkbox"
+                                        id="visCube7"
+                                        onChange={() => visibleCubesRef.current[6] = !visibleCubesRef.current[6]} 
+                                    />
+                                    <label htmlFor="visCube7">Cube 7</label>
+                                </td>
+                                <td>
+                                    <input 
+                                        type="checkbox"
+                                        id="visCube8"
+                                        onChange={() => visibleCubesRef.current[7] = !visibleCubesRef.current[7]} 
+                                    />
+                                    <label htmlFor="visCube8">Cube 8</label>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
             < Instructions />
             <div ref={mountRef}></div>
